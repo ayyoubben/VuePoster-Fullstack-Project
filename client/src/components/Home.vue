@@ -10,8 +10,8 @@
       </v-dialog>
     </v-layout>
     <v-flex xs12>
-      <v-carousel v-if="!loading && posts.length > 0" v-bind="{ 'cycle': true}" interval="3000">
-        <v-carousel-item v-for="post in posts" :key="post._id" :src="post.imageUrl">
+      <v-carousel style="cursor: pointer;" v-if="!loading && posts.length> 0" v-bind="{ 'cycle': true}" interval="3000">
+        <v-carousel-item v-for="post in posts" :key="post._id" :src="post.imageUrl" @click.native="goToPost(post._id)">
           <h1 id="carousel__title">{{post.title}}</h1>
         </v-carousel-item>
       </v-carousel>
@@ -34,6 +34,9 @@
       handleGetCarouselPosts() {
         // reach out to Vuex store, fire actions that gets posts for carousel
         this.$store.dispatch("getPosts")
+      },
+      goToPost(postId) {
+        this.$router.push(`/posts/${postId}`)
       }
     }
   }

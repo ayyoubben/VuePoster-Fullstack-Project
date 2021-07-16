@@ -13,12 +13,22 @@
 
       <!--Side navbar links-->
       <v-list>
-        <v-list-tile ripple v-for="item in horizontalNavItems" :key="item.title" :to="item.link">
+        <v-list-tile ripple v-for="item in sideNavItems" :key="item.title" :to="item.link">
           <v-list-tile-action>
             <v-icon>{{item.icon}}</v-icon>
           </v-list-tile-action>
           <v-list-tile-content>
             {{item.title}}
+          </v-list-tile-content>
+        </v-list-tile>
+
+        <!--Signout Button-->
+        <v-list-tile v-if="user" @click="handleSignoutUser">
+          <v-list-tile-action>
+            <v-icon>logout</v-icon>
+          </v-list-tile-action>
+          <v-list-tile-content>
+            Sign Out
           </v-list-tile-content>
         </v-list-tile>
       </v-list>
@@ -45,6 +55,22 @@
             <v-icon class="hidden-sm-only" left>{{item.icon}}</v-icon>
             {{item.title}}
         </v-btn>
+
+        <!--Profile Button-->
+        <v-btn flat to="/profile" v-if="user">
+          <v-icon class="hidden-sm-only" left>account_box</v-icon>
+          <v-badge right color="blue darken-2">
+            <!--<span slot="badge"></span>-->
+            Profile
+          </v-badge>
+        </v-btn>
+        
+        <!--Signout Button-->
+        <v-btn flat v-if="user" @click="handleSignoutUser">
+          <v-icon class="hidden-sm-only" left>logout</v-icon>
+          Signout
+        </v-btn>
+
       </v-toolbar-items>
     </v-toolbar>
 
@@ -54,36 +80,87 @@
         <transition name="fade">
           <router-view/>
         </transition>
+
+        <!--Auth Snackbar-->
+        <v-snackbar v-model="authSnackBar" color="success" :timeout="5000" bottom left>
+          <v-icon class="mr-3">check_circle</v-icon>
+          <h3>You are now signed in!</h3>
+          <v-btn dark flat @click="authSnackBar = false">Close</v-btn>          
+        </v-snackbar>
+
+        <!--AuthError Snackbar-->
+        <v-snackbar v-if="authError" v-model="authErrorSnackBar" color="warning" :timeout="5000" bottom left>
+          <v-icon class="mr-3">cancel</v-icon>
+          <h3>{{authError.message}}</h3>
+          <v-btn dark flat to="/signin">Signin</v-btn>          
+        </v-snackbar>
+
       </v-container>
     </main>
   </v-app>
 </template>
 
 <script>
+  import {mapGetters, Store} from 'vuex'
   export default {
     name: 'App',
     data() {
       return {
-        sideNav: false
+        sideNav: false,
+        authSnackBar: false,
+        authErrorSnackBar: false
       }
     },
     computed: {
+      ...mapGetters(['user', 'authError']),
       horizontalNavItems() {
-        return [
-          {icon: 'chat', title: 'Posts', link:'/posts'},
-          {icon: 'lock_open', title: 'Sign In', link: '/signin'},
-          {icon: 'create', title: 'Sign Up', link: '/signup'}
+        let items = [
+          {icon: 'mms', title: 'Posts', link:'/posts'},
+          {icon: 'login', title: 'Sign In', link: '/signin'},
+          {icon: 'add', title: 'Sign Up', link: '/signup'}
         ]
+        if (this.user) {
+          items = [
+            {icon: 'mms', title: 'Posts', link:'/posts'},
+          ]
+        } 
+        return items    
       },
-      horizontalNavItems() {
-        return [
-          {icon: 'chat', title: 'Posts', link:'/posts'},
-          {icon: 'lock_open', title: 'Sign In', link: '/signin'},
-          {icon: 'create', title: 'Sign Up', link: '/signup'}
+      sideNavItems() {
+        let items = [
+          {icon: 'mms', title: 'Posts', link:'/posts'},
+          {icon: 'login', title: 'Sign In', link: '/signin'},
+          {icon: 'add', title: 'Sign Up', link: '/signup'}
         ]
+        if (this.user) {
+          items = [
+            {icon: 'mms', title: 'Posts', link:'/posts'},
+            {icon: 'create', title: 'Create Post', link:'/post/add'},
+            {icon: 'account_box', title: 'Profile', link:'/profile'}           
+          ]
+        } 
+        return items
+      }
+    },
+    watch: {
+      user(newValue, oldValue) {
+        //if we had no value for user before, show snackbar
+        if (oldValue === null) {
+          this.authSnackBar = true
+        }
+      },
+      authError(value) {
+        // if auth error is not null show auth error snack bar
+        //this.authError = true
+        if (value !== null) {  
+          this.authErrorSnackBar = true
+        }
       }
     },
     methods: {
+      handleSignoutUser() {
+        this.$store.dispatch("signoutUser")
+      },
       toggleSideNav() {
         this.sideNav = !this.sideNav
       }
