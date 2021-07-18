@@ -37,11 +37,18 @@ type PostsPage {
 
 }
 
+type LikesFaves {
+  likes: Int
+  favorites: [Post]
+}
+
 type Query {
   getCurrentUser: User
   getPosts: [Post]
   getPost(_id: ID!): Post
   infiniteScrollPosts(pageNum: Int!, pageSize: Int!): PostsPage
+  searchPosts(searchTerm: String): [Post]
+  getUserPosts(userId: ID!): [Post]
 }
 
 type Mutation {
@@ -52,6 +59,17 @@ type Mutation {
     description: String!
     creatorId: ID!
   ): Post!
+  updateUserPost(
+    postId: ID!
+    userId: ID!
+    title: String!
+    imageUrl: String!
+    categories: [String]!
+    description: String!
+  ): Post!
+  deleteUserPost(postId: ID!): Post!
+  likePost(postId: ID!, username: String!): LikesFaves!
+  unlikePost(postId: ID!, username: String!): LikesFaves!
   addPostMessage(messageBody: String!, userId: ID!, postId: ID!): Message!
   signinUser(username: String!, password: String!): Token
   signupUser(username: String!, email: String!, password: String!): Token

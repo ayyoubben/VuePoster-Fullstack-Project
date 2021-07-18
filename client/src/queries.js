@@ -36,6 +36,32 @@ export const GET_POST = gql`
   }
 `
 
+export const GET_USER_POSTS = gql`
+  query($userId: ID!) {
+    getUserPosts(userId: $userId) {
+      _id
+      title
+      imageUrl
+      description
+      categories
+      createdDate
+      likes
+    }
+  }
+`
+
+export const SEARCH_POSTS = gql`
+  query($searchTerm: String) {
+    searchPosts(searchTerm: $searchTerm) {
+      _id
+      title
+      imageUrl
+      description
+      likes
+    }
+  }
+`
+
 //User Queries
 export const GET_CURRENT_USER = gql `
   query {
@@ -83,12 +109,38 @@ export const INFINITE_SCROLL_POSTS = gql`
 //Post Mutations
 export const ADD_POST = gql`
   mutation($title: String!, $imageUrl: String!, $categories: [String]!, $description: String!, $creatorId: ID!) {
-    addPost(title:$title, imageUrl:$imageUrl, categories:$categories, description:$description, creatorId:$creatorId) {
+    addPost(title: $title, imageUrl: $imageUrl, categories: $categories, description: $description, creatorId: $creatorId) {
       _id
       title
       imageUrl
       categories
       description
+    }
+  }
+`
+
+export const UPDATE_USER_POST = gql`
+  mutation ($postId: ID!, $userId: ID!, $title: String!, $imageUrl: String!, $categories: [String]!, $description: String!) {
+    updateUserPost(postId: $postId, userId: $userId, title: $title, imageUrl: $imageUrl, categories: $categories, description: $description) {
+      _id
+      title
+      imageUrl
+      categories
+      description
+      createdDate
+      likes
+      createdBy {
+        _id
+        avatar
+      }
+    }
+  }
+`
+
+export const DELETE_USER_POST = gql`
+  mutation($postId: ID!) {
+    deleteUserPost(postId: $postId){
+      _id
     }
   }
 `
@@ -103,6 +155,32 @@ export const ADD_POST_MESSAGE = gql`
         _id
         username
         avatar
+      }
+    }
+  }
+`
+
+export const LIKE_POST = gql`
+  mutation($postId: ID!, $username: String!) {
+    likePost(postId: $postId, username: $username) {
+      likes
+      favorites {
+        _id
+        title
+        imageUrl
+      }
+    }
+  }
+`
+
+export const UNLIKE_POST = gql`
+  mutation($postId: ID!, $username: String!) {
+    unlikePost(postId: $postId, username: $username) {
+      likes
+      favorites {
+        _id
+        title
+        imageUrl
       }
     }
   }

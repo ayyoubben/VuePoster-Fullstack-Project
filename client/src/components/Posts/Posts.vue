@@ -30,7 +30,7 @@
 
                                 <v-list-tile-content>
                                     <v-list-tile-title class="text--primary">{{post.createdBy.username}}</v-list-tile-title>
-                                    <v-list-tile-sub-title class="font-weight-thin">Added {{post.createdDate}}</v-list-tile-sub-title>
+                                    <v-list-tile-sub-title class="font-weight-thin">Added {{formatCreatedDate(post.createdDate)}}</v-list-tile-sub-title>
                                 </v-list-tile-content>
 
                                 <v-list-tile-action>
@@ -59,6 +59,7 @@
 </template>
 
 <script>
+import moment from 'moment'
 import {INFINITE_SCROLL_POSTS} from '../../queries'
 
 const pageSize = 2
@@ -68,7 +69,7 @@ export default {
     data() {
         return {
             pageNum: 1,
-            showMoreEnabled: true,
+            //showMoreEnabled: true,
             showPostCreator: false
         }
     },
@@ -81,7 +82,15 @@ export default {
             }
         }
     },
+    computed: {
+        showMoreEnabled() {
+            return this.infiniteScrollPosts && this.infiniteScrollPosts.hasMore
+        }
+    },
     methods: {
+        formatCreatedDate(date) {
+            return moment(new Date(date)).format('ll')
+        },
         showMorePosts() {
             this.pageNum ++
             this.$apollo.queries.infiniteScrollPosts.fetchMore({
@@ -92,7 +101,7 @@ export default {
                 updateQuery: (prevResult, {fetchMoreResult}) => {
                     const newPosts = fetchMoreResult.infiniteScrollPosts.posts
                     const hasMore = fetchMoreResult.infiniteScrollPosts.hasMore
-                    this.showMoreEnabled = hasMore
+                    //this.showMoreEnabled = hasMore
 
                     return {
                         infiniteScrollPosts: {

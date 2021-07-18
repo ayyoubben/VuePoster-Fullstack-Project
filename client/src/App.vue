@@ -46,7 +46,25 @@
       <v-spacer></v-spacer>
 
       <!--Search Input-->
-      <v-text-field flex prepend-icon="search" placeholder="Search Posts" color="accent" single-line hide-details></v-text-field>
+      <v-text-field v-model="searchTerm" @input="handleSearchPosts" flex prepend-icon="search" placeholder="Search Posts" color="accent" single-line hide-details></v-text-field>
+
+      <!--Search Results Card-->
+      <v-card dark v-if="searchResults.length" id="search__card">
+        <v-list>
+          <v-list-tile v-for="result in searchResults" :key="result._id" @click="goToSearchResult(result._id)">
+            <v-list-tile-title>
+              {{result.title}} - 
+              <span class="font-weight-thin">{{formatDescription(result.description)}}</span>
+            </v-list-tile-title>
+
+            <!--Show Like Icon if result in user favorites-->
+            <v-list-tile-action v-if="checkIfUserFavorite(result._id)">
+               <v-icon>favorite</v-icon>
+              
+            </v-list-tile-action>
+          </v-list-tile>
+        </v-list>
+      </v-card>
 
       <v-spacer></v-spacer>
 
@@ -59,8 +77,8 @@
         <!--Profile Button-->
         <v-btn flat to="/profile" v-if="user">
           <v-icon class="hidden-sm-only" left>account_box</v-icon>
-          <v-badge right color="blue darken-2">
-            <!--<span slot="badge"></span>-->
+          <v-badge right color="blue darken-2" :class="{'bounce': badgeAnimated}">
+            <span slot="badge" v-if="userFavorites.length">{{userFavorites.length}}</span>
             Profile
           </v-badge>
         </v-btn>
@@ -106,13 +124,15 @@
     name: 'App',
     data() {
       return {
+        searchTerm: '',
+        badgeAnimated: false,
         sideNav: false,
         authSnackBar: false,
         authErrorSnackBar: false
       }
     },
     computed: {
-      ...mapGetters(['user', 'authError']),
+      ...mapGetters(['user', 'authError', 'userFavorites', 'searchResults', 'post']),
       horizontalNavItems() {
         let items = [
           {icon: 'mms', title: 'Posts', link:'/posts'},
@@ -155,11 +175,40 @@
         if (value !== null) {  
           this.authErrorSnackBar = true
         }
+      },
+      userFavorites(value) {
+        if (value) {
+          this.badgeAnimated = true
+          setTimeout(() => (this.badgeAnimated = false), 1000)
+        }
       }
     },
     methods: {
+      handleSearchPosts() {
+        this.$store.dispatch('searchPosts', {
+          searchTerm: this.searchTerm
+        })
+      },
+      goToSearchResult(resultId) {
+        this.searchTerm = ''
+        //console.log(resultId)
+        //this.$router.push(`/posts/${resultId}`)
+        this.$store.dispatch('getPost', {_id: resultId})
+        //console.log(this.post)
+        this.$router.push(`/posts/${this.post._id}`)
+        this.$store.commit('clearSearchResults')
+      },
+      formatDescription(desc) {
+        return desc.length > 30 ? `${desc.slice(0, 30)}...` : desc
+      },
       handleSignoutUser() {
         this.$store.dispatch("signoutUser")
+      },
+      checkIfUserFavorite(resultId) {
+        return (
+          this.userFavorites && 
+          this.userFavorites.some(fave => fave._id === resultId)
+        )
       },
       toggleSideNav() {
         this.sideNav = !this.sideNav
@@ -169,6 +218,16 @@
 </script>
 
 <style>
+h1 {
+  font-weight: 400;
+  font-size: 2.5rem;
+}
+
+h2 {
+  font-weight: 400;
+  font-size: 2rem;
+}
+
 .fade-enter-active,
 .fade-leave-active {
   transition-property: opacity;
@@ -182,5 +241,33 @@
 .fade-enter,
 .fade-leave-active {
   opacity: 0;
+}
+
+#search__card {
+  position: absolute;
+  width: 100vw;
+  z-index: 8;
+  top: 100%;
+  left: 0%;
+}
+
+/*User favorite animation*/
+.bounce {
+  animation: bounce 1s both;
+}
+
+@keyframes bounce {
+  0%, 20%, 53%, 80%, 100% {
+    transform: translate3d(0, 0, 0);
+  }
+  40%, 43% {
+    transform: translate3d(0, -20px, 0);
+  }
+  70% {
+    transform: translate3d(0, -10px, 0);
+  }
+  90% {
+    transform: translate3d(0, -4px, 0);
+  }
 }
 </style>

@@ -34,6 +34,28 @@ module.exports = {
       })
       return post
     },
+    getUserPosts: async (_, {userId}, { Post }) => {
+      const posts = await Post.find({
+        createdBy: userId
+      })
+      return posts
+    },
+    searchPosts: async (_, {searchTerm}, { Post }) => {
+      if (searchTerm) {
+        const searchResults = await Post.find({
+          //perform a text search for search value of search term
+          $text: { $search: searchTerm }
+        },
+        {
+          //assign score term a text score to provide best match
+          score: { $meta: 'textScore' }
+        }).sort({
+          score: { $meta: 'textScore' },
+          likes: 'desc'
+        }).limit(5)
+        return searchResults
+      }
+    },
     infiniteScrollPosts: async (_, {pageNum, pageSize}, { Post }) => {
       let posts
       if (pageNum === 1) {
@@ -68,6 +90,27 @@ module.exports = {
       }).save();
       return newPost;
     },
+    updateUserPost: async (
+      _,
+      {postId, userId, title, imageUrl, categories, description},
+      {Post}
+    ) => {
+      const post = Post.findOneAndUpdate({
+        _id: postId,
+        createdBy: userId
+      },
+      {
+        $set: {title, imageUrl, categories, description}
+      },
+      {
+        new: true
+      })
+      return post
+    },
+    deleteUserPost: async (_, {postId}, {Post}) => {
+      const post = await Post.findOneAndRemove({_id: postId})
+      return post
+    }, 
     addPostMessage: async (_, {messageBody, userId, postId}, {Post}) => {
       const newMessage = {
         messageBody,
@@ -85,6 +128,40 @@ module.exports = {
         model: "User"
       })
       return post.messages[0]
+    },
+    likePost: async (_, {postId, username}, {Post, User}) => {
+      const post = await Post.findOneAndUpdate(
+        { _id: postId }, 
+        {$inc: { likes: 1 }},
+        { new: true }
+      )
+      const user = await User.findOneAndUpdate(
+        {username},
+        {$addToSet: {favorites: postId}},
+        {new: true}
+      ).populate({
+        path: 'favorites',
+        model: 'Post'
+      })
+      //return only likes from post and favorites from user
+      return {likes: post.likes, favorites: user.favorites}
+    },
+    unlikePost: async (_, {postId, username}, {Post, User}) => {
+      const post = await Post.findOneAndUpdate(
+        { _id: postId }, 
+        {$inc: { likes: -1 }},
+        { new: true }
+      )
+      const user = await User.findOneAndUpdate(
+        {username},
+        {$pull: {favorites: postId}},
+        {new: true}
+      ).populate({
+        path: 'favorites',
+        model: 'Post'
+      })
+      //return only likes from post and favorites from user
+      return {likes: post.likes, favorites: user.favorites}
     },
     signinUser: async (_, {username, password}, { User }) => {
       const user = await User.findOne({username})
